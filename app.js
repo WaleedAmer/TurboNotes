@@ -8,9 +8,11 @@ canvas.style.height = canvas.height + 'px';
 var screenWidth = window.innerWidth;
 var screenHeight = window.innerHeight;	
 
+var padding = 20;
+
 var pieces = [];
-var cursorx = 0;
-var cursory = 0;
+var cursorx = padding;
+var cursory = padding;
 
 var lineheights = [];
 var currentline = 0;
@@ -20,6 +22,13 @@ var linespacing = 20;
 
 var appendButton = {
 	x: screenWidth - 50,
+	y: screenHeight - 50,
+	width: 45,
+	height: 45
+}
+
+var clearButton = {
+	x: 5,
 	y: screenHeight - 50,
 	width: 45,
 	height: 45
@@ -42,7 +51,14 @@ window.onload = function(){
 }
 
 function update(){
+
 	ctx.clearRect(0,0,screenWidth,screenHeight);
+
+	ctx.fillStyle = 'green';
+	ctx.fillRect(appendButton.x, appendButton.y, appendButton.width, appendButton.height)
+
+	ctx.fillStyle = 'red';
+	ctx.fillRect(clearButton.x, clearButton.y, clearButton.width,  clearButton.height)
 
 	for (i=0; i<pieces.length; i++){
 		var piece = pieces[i];
@@ -50,18 +66,16 @@ function update(){
 		if (piece.relative){
 			for (j=0; j<piece.pixels.length; j++){
 				var pixel = piece.pixels[j];
-				ctx.fillRect(pixel.x+piece.x, pixel.y+piece.y+piece.offsetY, pixel.width, pixel.height);
+				ctx.fillRect((pixel.x*piece.scaleX)+piece.x, (pixel.y*piece.scaleY)+piece.y+piece.offsetY, pixel.width*piece.scaleX, pixel.height*piece.scaleY);
 			}
 		}
 		else {
 			for (j=0; j<piece.pixels.length; j++){
+				ctx.fillStyle = 'gray';
 				var pixel = piece.pixels[j];
 				ctx.fillRect(pixel.x, pixel.y, pixel.width, pixel.height);
 			}
 		}
-
-		ctx.fillStyle = 'red';
-		ctx.fillRect(appendButton.x, appendButton.y, appendButton.width, appendButton.height)
 
 	}
 }
@@ -78,19 +92,19 @@ function appendPiece(){
 	for (i=0; i<pieces.length; i++){
 		if (pieces[i].appended == false){
 			var piece = pieces[i];
-			if (piece.height > lineheights[currentline]){
-				lineheights[currentline] = piece.height;
+			if (piece.height*piece.scaleY > lineheights[currentline]){
+				lineheights[currentline] = piece.height*piece.scaleY;
 			}
-			if ((cursorx + piece.width) > screenWidth){
-				cursorx = 0;
-				cursory += lineheights[currentline] + linespacing;
+			if ((cursorx + (piece.width*piece.scaleX)) > screenWidth){
+				cursorx = padding;
+				cursory += lineheights[currentline] + (linespacing*piece.scaleY);
 				currentline++;
 				lineheights[currentline] = 0;
 			}
 			piece.line = currentline;
 			piece.x = cursorx;
 			piece.y = cursory;
-			cursorx += piece.width + 50;
+			cursorx += (piece.width*piece.scaleX) + (padding*2);
 			piece.appended = true;
 			break;
 		}
@@ -98,8 +112,8 @@ function appendPiece(){
 
 	for (var j=0; j<pieces.length; j++){
 		var piece2 = pieces[j];
-		if (piece2.height < lineheights[piece2.line]){
-			piece2.offsetY = (lineheights[piece2.line]-piece2.height)/2
+		if ((piece2.height*piece2.scaleY) < lineheights[piece2.line]){
+			piece2.offsetY = (lineheights[piece2.line]-(piece2.height*piece2.scaleY))/2
 		}
 	}
 }
@@ -142,6 +156,16 @@ function startDraw(e){
 		return;
 	}
 
+	if (collides(clearButton, touch)) {
+		while(pieces.length){
+			pieces.pop();
+			currentline = 0;
+			cursorx = padding;
+			cursory = padding;
+		}
+		return;
+	}
+
 	painting = true
 
 	var pxls = [{
@@ -156,7 +180,9 @@ function startDraw(e){
 		relative: false,
 		appended: false,
 		line: 0,
-		offsetY: 0
+		offsetY: 0,
+		scaleX: 1,
+		scaleY: 1
 	}
 
 	if (pieces.length > 0 && pieces[pieces.length-1].relative){
@@ -213,8 +239,8 @@ function moveDraw(e){
         }
 
         lineThickness = 5 - Math.sqrt((x2 - x1) *(x2-x1) + (y2 - y1) * (y2-y1))/10;
-        if (lineThickness < 2){
-            lineThickness = 2;   
+        if (lineThickness < 1){
+            lineThickness = 1;   
         }
 
         for (var x = x1; x < x2; x++){
@@ -294,6 +320,8 @@ function pieceFrame(){
 	piece.width = sizex;
 	piece.height = sizey;
 	piece.relative = true;
+	piece.scaleX = 0.25;
+	piece.scaleY = 0.25;
 
 	console.log("\nX: "+minx+"\nY: "+miny+"\nWidth: "+sizex+"\nHeight: "+sizey)
 }
