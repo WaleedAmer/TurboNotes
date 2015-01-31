@@ -10,4 +10,5 @@ canvas {
 	position: absolute;
 	margin: 0;
 	display: block;
+	-ms-touch-action: none;
 }

@@ -65,28 +65,38 @@ function update(){
 		ctx.fillStyle = 'black'//'hsl('+(i*36)+', 100%, 50%)';
 		if (piece.relative){
 			for (j=0; j<piece.pixels.length; j++){
-				var pixel = piece.pixels[j];
-				ctx.fillRect((pixel.x*piece.scaleX)+piece.x, (pixel.y*piece.scaleY)+piece.y+piece.offsetY, pixel.width*piece.scaleX, pixel.height*piece.scaleY);
+				if (j%4 == 0) {
+					var pixel = piece.pixels[j];
+					ctx.fillRect((pixel.x*piece.scaleX)+piece.x, (pixel.y*piece.scaleY)+piece.y+piece.offsetY, pixel.width*piece.scaleX, pixel.height*piece.scaleY);
+				}	
 			}
 		}
 		else {
 			for (j=0; j<piece.pixels.length; j++){
-				ctx.fillStyle = 'gray';
-				var pixel = piece.pixels[j];
-				ctx.fillRect(pixel.x, pixel.y, pixel.width, pixel.height);
+				if (j%1 == 0) {
+					ctx.fillStyle = 'gray';
+					var pixel = piece.pixels[j];
+					ctx.fillRect(pixel.x, pixel.y, pixel.width, pixel.height);
+				}
 			}
 		}
 
 	}
 }
 
-Mousetrap.bind('space', function(e){
+Mousetrap.bind('return', function(e){
 	appendPiece();
+});
+
+Mousetrap.bind('c', function(e){
+	clearPieces();
 });
 
 function appendPiece(){
 	var piece = null;
 	
+	painting = false;
+
 	pieceFrame();
 
 	for (i=0; i<pieces.length; i++){
@@ -104,7 +114,7 @@ function appendPiece(){
 			piece.line = currentline;
 			piece.x = cursorx;
 			piece.y = cursory;
-			cursorx += (piece.width*piece.scaleX) + (padding*2);
+			cursorx += (piece.width*piece.scaleX) + (padding);
 			piece.appended = true;
 			break;
 		}
@@ -138,6 +148,18 @@ document.addEventListener('mouseup', function(e){
 	endDraw(e);
 }, false);
 
+function clearPieces(){
+	while(pieces.length>0){
+		pieces.pop();
+		currentline = 0;
+		cursorx = padding;
+		cursory = padding;
+	}
+	for (var i=0; i<lineheights.length; i++){
+		lineheights[i] = 0;
+	}
+}		
+
 function startDraw(e){
 	// Get touch location in canvas dimensions
 	var rect = canvas.getBoundingClientRect();
@@ -157,12 +179,7 @@ function startDraw(e){
 	}
 
 	if (collides(clearButton, touch)) {
-		while(pieces.length){
-			pieces.pop();
-			currentline = 0;
-			cursorx = padding;
-			cursory = padding;
-		}
+		clearPieces();
 		return;
 	}
 
@@ -182,7 +199,9 @@ function startDraw(e){
 		line: 0,
 		offsetY: 0,
 		scaleX: 1,
-		scaleY: 1
+		scaleY: 1,
+		averageX: 0,
+		averageY: 0
 	}
 
 	if (pieces.length > 0 && pieces[pieces.length-1].relative){
@@ -239,8 +258,8 @@ function moveDraw(e){
         }
 
         lineThickness = 5 - Math.sqrt((x2 - x1) *(x2-x1) + (y2 - y1) * (y2-y1))/10;
-        if (lineThickness < 1){
-            lineThickness = 1;   
+        if (lineThickness < 2){
+            lineThickness = 2;   
         }
 
         for (var x = x1; x < x2; x++){
@@ -320,8 +339,8 @@ function pieceFrame(){
 	piece.width = sizex;
 	piece.height = sizey;
 	piece.relative = true;
-	piece.scaleX = 0.25;
-	piece.scaleY = 0.25;
+	piece.scaleX = 0.1;
+	piece.scaleY = 0.1;
 
 	console.log("\nX: "+minx+"\nY: "+miny+"\nWidth: "+sizex+"\nHeight: "+sizey)
 }
